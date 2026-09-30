@@ -1,0 +1,11 @@
+@import 'tailwindcss';
+
+:root {
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  color: #27382f;
+  background: #f4f8f5;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+body { margin: 0; }
