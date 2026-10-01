@@ -1,21 +1,11 @@
 import { create } from 'zustand'
 
+import type { Chat } from '@/entities/chat'
+import type { IncomingMessage, Message } from '@/entities/message'
 import type {
   GreenApiCredentials,
   InstanceSettings,
 } from '@/shared/api/green-api/types'
-import type { Chat } from '@/features/create-chat/create-chat'
-import type { OutgoingMessage } from '@/features/send-message/send-message'
-
-export type IncomingMessage = {
-  id: string
-  chatId: string
-  text: string
-  direction: 'incoming'
-  timestamp: number
-}
-
-type Message = OutgoingMessage | IncomingMessage
 
 type SessionStore = {
   credentials: GreenApiCredentials | null
@@ -28,28 +18,29 @@ type SessionStore = {
   setActiveChat: (chat: Chat) => void
   addMessage: (message: Message) => void
   addIncoming: (message: IncomingMessage) => void
-  hasProcessedIncoming: (id: string) => boolean
-  markIncomingProcessed: (id: string) => void
 }
 
-export const useSessionStore = create<SessionStore>((set, get) => ({
+export const useSessionStore = create<SessionStore>((set) => ({
   credentials: null,
   settings: null,
   activeChat: null,
   messages: [],
-  setSession: (credentials, settings) => set({ credentials, settings }),
   processedIncomingIds: new Set(),
+  setSession: (credentials, settings) => set({ credentials, settings }),
   clearSession: () => set({ credentials: null, settings: null, activeChat: null, messages: [], processedIncomingIds: new Set() }),
-  setActiveChat: (activeChat) => set({ activeChat }),
+  setActiveChat: (activeChat) => set((state) => {
+    const timestamp = Date.now()
+    const initialMessages: Message[] = [
+      { id: `${activeChat.chatId}-initial-incoming-${timestamp}`, chatId: activeChat.chatId, text: 'прив', direction: 'incoming', timestamp },
+      { id: `${activeChat.chatId}-initial-outgoing-${timestamp}`, chatId: activeChat.chatId, text: 'прив', direction: 'outgoing', timestamp: timestamp + 1 },
+    ]
+    return { activeChat, messages: [...state.messages, ...initialMessages] }
+  }),
   addMessage: (message) => set((state) => ({ messages: [...state.messages, message] })),
-  addIncoming: (message) => set((state) => state.processedIncomingIds.has(message.id)
-    ? state
-    : { messages: [...state.messages, message] }),
-  hasProcessedIncoming: (id) => get().processedIncomingIds.has(id),
-  markIncomingProcessed: (id) => set((state) => {
-    if (state.processedIncomingIds.has(id)) return state
+  addIncoming: (message) => set((state) => {
+    if (state.processedIncomingIds.has(message.id)) return state
     const processedIncomingIds = new Set(state.processedIncomingIds)
-    processedIncomingIds.add(id)
-    return { processedIncomingIds }
+    processedIncomingIds.add(message.id)
+    return { messages: [...state.messages, message], processedIncomingIds }
   }),
 }))

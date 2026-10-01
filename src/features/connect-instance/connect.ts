@@ -1,6 +1,5 @@
-import axios from 'axios'
-
 import { getSettings, getStateInstance } from '@/shared/api/green-api/account'
+import { getGreenApiErrorKind } from '@/shared/api/green-api/errors'
 import type {
   GreenApiCredentials,
   InstanceSettings,
@@ -48,21 +47,16 @@ function getStateMessage(state: string) {
 }
 
 function getConnectionErrorMessage(error: unknown) {
-  if (!axios.isAxiosError(error)) {
-    return 'Не удалось проверить подключение. Повторите попытку.'
+  switch (getGreenApiErrorKind(error)) {
+    case 'rate-limit':
+      return 'Превышен лимит запросов GREEN-API. Повторите попытку позже.'
+    case 'server':
+      return 'GREEN-API временно недоступен. Повторите попытку позже.'
+    case 'client':
+      return 'Проверьте API URL, ID инстанса и токен.'
+    case 'network':
+      return 'Не удалось соединиться с GREEN-API. Проверьте API URL и интернет-соединение.'
+    default:
+      return 'Не удалось проверить подключение. Повторите попытку.'
   }
-
-  if (error.response?.status === 429) {
-    return 'Превышен лимит запросов GREEN-API. Повторите попытку позже.'
-  }
-
-  if (error.response?.status && error.response.status >= 500) {
-    return 'GREEN-API временно недоступен. Повторите попытку позже.'
-  }
-
-  if (error.response?.status && error.response.status >= 400) {
-    return 'Проверьте API URL, ID инстанса и токен.'
-  }
-
-  return 'Не удалось соединиться с GREEN-API. Проверьте API URL и интернет-соединение.'
 }

@@ -1,14 +1,13 @@
 import { useEffect, useRef } from 'react'
 
-import type { IncomingMessage } from '@/store/session-store'
-import type { OutgoingMessage } from '@/features/send-message/send-message'
-
-type Message = IncomingMessage | OutgoingMessage
+import type { Message } from '@/entities/message'
 
 type MessageListProps = { messages: Message[] }
 
+const timeFormatter = new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit' })
+
 function formatTime(timestamp: number) {
-  return new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit' }).format(timestamp)
+  return timeFormatter.format(timestamp)
 }
 
 export function MessageList({ messages }: MessageListProps) {

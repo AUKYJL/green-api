@@ -5,8 +5,9 @@ import { z } from 'zod'
 import { MessageCirclePlus } from 'lucide-react'
 import { toast } from 'sonner'
 
+import { DevChatIdForm } from './DevChatIdForm'
 import { createChat } from './create-chat'
-import type { Chat } from './create-chat'
+import type { Chat } from '@/entities/chat'
 import type { GreenApiCredentials } from '@/shared/api/green-api/types'
 import { isSupportedMaxPhone, normalizePhone } from '@/shared/lib/normalize-phone'
 
@@ -23,7 +24,6 @@ type NewChatFormProps = {
 }
 
 type NewChatValues = z.infer<typeof newChatSchema>
-
 export function NewChatForm({ credentials, onCreated }: NewChatFormProps) {
   const [error, setError] = useState<string | null>(null)
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<NewChatValues>({
@@ -39,19 +39,30 @@ export function NewChatForm({ credentials, onCreated }: NewChatFormProps) {
     } catch (creationError) {
       const message = creationError instanceof Error ? creationError.message : 'Не удалось создать чат.'
       setError(message)
-      toast.error(message)
     }
   }
 
   return (
-    <form className="new-chat-form" onSubmit={handleSubmit(onSubmit)} noValidate>
-      <label htmlFor="new-chat-phone">Номер получателя</label>
-      <div className="new-chat-controls">
-        <input id="new-chat-phone" {...register('phone')} inputMode="tel" placeholder="+7 999 123-45-67" aria-invalid={Boolean(errors.phone)} />
-        <button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Проверяем…' : <><MessageCirclePlus size={17} aria-hidden="true" />Открыть чат</>}</button>
-      </div>
-      {errors.phone && <p className="field-error">{errors.phone.message}</p>}
-      {error && <p className="form-error" role="alert">{error}</p>}
-    </form>
+    <>
+      <form className="new-chat-form" onSubmit={handleSubmit(onSubmit)} noValidate>
+        <label htmlFor="new-chat-phone">Номер получателя</label>
+        <div className="new-chat-controls">
+          <input id="new-chat-phone" {...register('phone')} inputMode="tel" placeholder="+7 999 123-45-67" aria-invalid={Boolean(errors.phone)} />
+          <button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? (
+              'Проверяем…'
+            ) : (
+              <>
+                <MessageCirclePlus size={17} aria-hidden="true" />
+                Открыть чат
+              </>
+            )}
+          </button>
+        </div>
+        {errors.phone && <p className="field-error">{errors.phone.message}</p>}
+        {error && <p className="form-error" role="alert">{error}</p>}
+      </form>
+      {import.meta.env.DEV && <DevChatIdForm onCreated={onCreated} />}
+    </>
   )
 }

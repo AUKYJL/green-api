@@ -5,15 +5,14 @@ const RECEIVE_TIMEOUT_SECONDS = 5
 
 export async function receiveNotification(
   credentials: GreenApiCredentials,
-  receiveTimeout = RECEIVE_TIMEOUT_SECONDS,
   signal?: AbortSignal,
 ) {
   const response = await greenApiHttp.get<NotificationEnvelope | null>(
     buildGreenApiUrl(credentials, 'receiveNotification'),
     {
-      params: { receiveTimeout },
+      params: { receiveTimeout: RECEIVE_TIMEOUT_SECONDS },
       signal,
-      timeout: (receiveTimeout + 10) * 1000,
+      timeout: (RECEIVE_TIMEOUT_SECONDS + 10) * 1000,
     },
   )
 

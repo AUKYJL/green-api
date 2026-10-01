@@ -1,16 +1,10 @@
-import axios from 'axios'
-
+import type { Chat } from '@/entities/chat'
+import type { OutgoingMessage } from '@/entities/message'
 import { sendMessage } from '@/shared/api/green-api/chat'
+import { getGreenApiErrorKind } from '@/shared/api/green-api/errors'
 import type { GreenApiCredentials } from '@/shared/api/green-api/types'
-import type { Chat } from '@/features/create-chat/create-chat'
 
-export type OutgoingMessage = {
-  id: string
-  chatId: string
-  text: string
-  direction: 'outgoing'
-  timestamp: number
-}
+export type { OutgoingMessage } from '@/entities/message'
 
 export class SendMessageError extends Error {}
 
@@ -45,7 +39,7 @@ export async function sendChatMessage(
 }
 
 function getSendErrorMessage(error: unknown) {
-  if (axios.isAxiosError(error) && error.response?.status === 429) {
+  if (getGreenApiErrorKind(error) === 'rate-limit') {
     return 'Превышен лимит отправки GREEN-API. Повторите попытку позже.'
   }
   return 'Не удалось отправить сообщение. Проверьте соединение и повторите попытку.'

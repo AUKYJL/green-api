@@ -35,7 +35,7 @@ export function Messenger({ isReceivingDegraded }: MessengerProps) {
         <section className="active-chat" aria-live="polite">
           {activeChat ? (
             <>
-              <header className="chat-title"><div><h2>{activeChat.phone}</h2><p>MAX</p></div><span className="chat-status"><Radio size={13} aria-hidden="true" />Чат MAX</span></header>
+              <header className="chat-title"><div><h2>{activeChat.name ?? activeChat.phone ?? activeChat.chatId}</h2><p>MAX</p></div><span className="chat-status"><Radio size={13} aria-hidden="true" />Чат MAX</span></header>
               <MessageList messages={chatMessages} />
               <MessageComposer credentials={credentials} chat={activeChat} onSent={addMessage} />
             </>

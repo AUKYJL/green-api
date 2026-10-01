@@ -5,13 +5,22 @@ export type GreenApiCredentials = {
 }
 
 export type InstanceState = {
-  stateInstance: string
+  stateInstance: InstanceStateValue
 }
+
+export type InstanceStateValue =
+  | 'authorized'
+  | 'notAuthorized'
+  | 'blocked'
+  | 'starting'
+  | (string & {})
 
 export type InstanceSettings = {
   webhookUrl?: string
-  incomingWebhook?: string
+  incomingWebhook?: IncomingWebhookValue
 }
+
+export type IncomingWebhookValue = 'yes' | 'no' | (string & {})
 
 export type CheckAccountResponse = {
   exist: boolean

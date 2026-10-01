@@ -41,7 +41,6 @@ export function ConnectInstanceForm({ onConnected }: ConnectInstanceFormProps) {
     } catch (connectionError) {
       const message = connectionError instanceof Error ? connectionError.message : 'Не удалось подключиться.'
       setError(message)
-      toast.error(message)
     }
   }
 
@@ -56,7 +55,16 @@ export function ConnectInstanceForm({ onConnected }: ConnectInstanceFormProps) {
           <label>ID инстанса<input {...register('idInstance')} inputMode="numeric" autoComplete="off" aria-invalid={Boolean(errors.idInstance)} />{errors.idInstance && <span className="field-error">{errors.idInstance.message}</span>}</label>
           <label>API-токен<input {...register('apiTokenInstance')} type="password" autoComplete="off" aria-invalid={Boolean(errors.apiTokenInstance)} />{errors.apiTokenInstance && <span className="field-error">{errors.apiTokenInstance.message}</span>}</label>
           {error && <p className="form-error" role="alert">{error}</p>}
-          <button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Проверяем…' : <><LogIn size={17} aria-hidden="true" />Подключиться</>}</button>
+          <button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? (
+              'Проверяем…'
+            ) : (
+              <>
+                <LogIn size={17} aria-hidden="true" />
+                Подключиться
+              </>
+            )}
+          </button>
         </form>
       </section>
     </main>

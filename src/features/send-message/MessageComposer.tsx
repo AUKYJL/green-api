@@ -1,11 +1,10 @@
-import { useState } from 'react'
 import { SendHorizonal } from 'lucide-react'
-import { toast } from 'sonner'
+import { useState } from 'react'
 
-import type { Chat } from '@/features/create-chat/create-chat'
-import { sendChatMessage } from './send-message'
-import type { OutgoingMessage } from './send-message'
+import type { Chat } from '@/entities/chat'
 import type { GreenApiCredentials } from '@/shared/api/green-api/types'
+import type { OutgoingMessage } from '@/entities/message'
+import { sendChatMessage } from './send-message'
 
 type MessageComposerProps = {
   credentials: GreenApiCredentials
@@ -29,7 +28,6 @@ export function MessageComposer({ credentials, chat, onSent }: MessageComposerPr
     } catch (sendError) {
       const message = sendError instanceof Error ? sendError.message : 'Не удалось отправить сообщение.'
       setError(message)
-      toast.error(message)
     } finally {
       setIsSending(false)
     }
@@ -45,7 +43,16 @@ export function MessageComposer({ credentials, chat, onSent }: MessageComposerPr
   return (
     <div className="composer">
       <textarea value={text} onChange={(event) => setText(event.target.value)} onKeyDown={onKeyDown} placeholder="Сообщение" rows={2} aria-label="Сообщение" />
-      <button type="button" onClick={() => void submit()} disabled={!text.trim() || isSending}>{isSending ? 'Отправляем…' : <><SendHorizonal size={17} aria-hidden="true" />Отправить</>}</button>
+      <button type="button" onClick={() => void submit()} disabled={!text.trim() || isSending}>
+        {isSending ? (
+          'Отправляем…'
+        ) : (
+          <>
+            <SendHorizonal size={17} aria-hidden="true" />
+            Отправить
+          </>
+        )}
+      </button>
       {error && <p className="form-error" role="alert">{error}</p>}
     </div>
   )

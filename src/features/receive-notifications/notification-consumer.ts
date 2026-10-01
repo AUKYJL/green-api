@@ -3,12 +3,10 @@ import axios from 'axios'
 import { deleteNotification, receiveNotification } from '@/shared/api/green-api/notifications'
 import { extractIncomingText } from '@/shared/api/green-api/parsers'
 import type { GreenApiCredentials, NotificationEnvelope } from '@/shared/api/green-api/types'
-import type { IncomingMessage } from '@/store/session-store'
+import type { IncomingMessage } from '@/entities/message'
 
 type ConsumerCallbacks = {
   addIncoming: (message: IncomingMessage) => void
-  hasProcessed: (id: string) => boolean
-  markProcessed: (id: string) => void
   onDegraded?: () => void
   onRecovered?: () => void
 }
@@ -17,11 +15,13 @@ const RETRY_DELAY_MS = 1_500
 
 function waitForRetry(signal: AbortSignal) {
   return new Promise<void>((resolve) => {
-    const timeout = window.setTimeout(resolve, RETRY_DELAY_MS)
-    signal.addEventListener('abort', () => {
+    const finish = () => {
       window.clearTimeout(timeout)
+      signal.removeEventListener('abort', finish)
       resolve()
-    }, { once: true })
+    }
+    const timeout = window.setTimeout(finish, RETRY_DELAY_MS)
+    signal.addEventListener('abort', finish, { once: true })
   })
 }
 
@@ -32,9 +32,8 @@ export async function processNotification(
   signal?: AbortSignal,
 ) {
   const incoming = extractIncomingText(notification.body)
-  if (incoming && !callbacks.hasProcessed(incoming.id)) {
+  if (incoming) {
     callbacks.addIncoming({ ...incoming, direction: 'incoming' })
-    callbacks.markProcessed(incoming.id)
   }
   await deleteNotification(credentials, notification.receiptId, signal)
 }
@@ -46,8 +45,12 @@ export async function runNotificationConsumer(
 ) {
   while (!signal.aborted) {
     try {
-      const notification = await receiveNotification(credentials, 5, signal)
-      if (signal.aborted || !notification) continue
+      const notification = await receiveNotification(credentials, signal)
+      if (signal.aborted) return
+      if (!notification) {
+        callbacks.onRecovered?.()
+        continue
+      }
 
       await processNotification(notification, credentials, callbacks, signal)
       callbacks.onRecovered?.()

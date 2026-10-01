@@ -17,9 +17,11 @@ function callbacks() {
   return {
     messages,
     callbacks: {
-      addIncoming: (message: { id: string }) => messages.push(message),
-      hasProcessed: (id: string) => processed.has(id),
-      markProcessed: (id: string) => processed.add(id),
+      addIncoming: (message: { id: string }) => {
+        if (processed.has(message.id)) return
+        messages.push(message)
+        processed.add(message.id)
+      },
     },
   }
 }
@@ -72,7 +74,7 @@ describe('notification consumer', () => {
   })
 
   it('stops after aborting an in-flight receive', async () => {
-    vi.mocked(receiveNotification).mockImplementation((_, __, signal) => new Promise((_, reject) => {
+    vi.mocked(receiveNotification).mockImplementation((_, signal) => new Promise((_, reject) => {
       signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), { once: true })
     }))
     const controller = new AbortController()
@@ -81,5 +83,32 @@ describe('notification consumer', () => {
     controller.abort()
     await expect(running).resolves.toBeUndefined()
     expect(receiveNotification).toHaveBeenCalledTimes(1)
+  })
+
+  it('recovers after a successful empty poll', async () => {
+    vi.useFakeTimers()
+    const onDegraded = vi.fn()
+    const onRecovered = vi.fn()
+    vi.mocked(receiveNotification)
+      .mockRejectedValueOnce(new Error('network'))
+      .mockResolvedValueOnce(null)
+      .mockImplementation((_, signal) => new Promise((_, reject) => {
+        signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), { once: true })
+      }))
+
+    const controller = new AbortController()
+    const running = runNotificationConsumer(credentials, {
+      ...callbacks().callbacks,
+      onDegraded,
+      onRecovered,
+    }, controller.signal)
+
+    await vi.advanceTimersByTimeAsync(1_500)
+    await vi.waitFor(() => expect(onRecovered).toHaveBeenCalledTimes(1))
+    expect(onDegraded).toHaveBeenCalledTimes(1)
+
+    controller.abort()
+    await expect(running).resolves.toBeUndefined()
+    vi.useRealTimers()
   })
 })

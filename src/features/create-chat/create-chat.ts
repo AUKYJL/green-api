@@ -1,13 +1,11 @@
-import axios from 'axios'
-
+import type { Chat } from '@/entities/chat'
 import { checkAccount } from '@/shared/api/green-api/chat'
+import { getGreenApiErrorKind } from '@/shared/api/green-api/errors'
 import type { GreenApiCredentials } from '@/shared/api/green-api/types'
+import { isValidChatId } from '@/shared/lib/is-valid-chat-id'
 import { isSupportedMaxPhone, normalizePhone } from '@/shared/lib/normalize-phone'
 
-export type Chat = {
-  chatId: string
-  phone: string
-}
+export type { Chat } from '@/entities/chat'
 
 export class CreateChatError extends Error {}
 
@@ -33,8 +31,18 @@ export async function createChat(credentials: GreenApiCredentials, inputPhone: s
   }
 }
 
+export function createChatById(inputChatId: string): Chat {
+  const chatId = inputChatId.trim()
+
+  if (!isValidChatId(chatId)) {
+    throw new CreateChatError('Введите корректный числовой chatId.')
+  }
+
+  return { chatId }
+}
+
 function getCreateChatErrorMessage(error: unknown) {
-  if (axios.isAxiosError(error) && error.response?.status === 429) {
+  if (getGreenApiErrorKind(error) === 'rate-limit') {
     return 'Превышен лимит запросов GREEN-API. Повторите попытку позже.'
   }
   return 'Не удалось проверить номер в GREEN-API. Повторите попытку.'
