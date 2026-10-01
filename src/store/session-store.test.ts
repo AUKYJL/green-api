@@ -22,12 +22,9 @@ describe('session store incoming messages', () => {
     expect(state.processedIncomingIds).toEqual(new Set(['incoming-1']))
   })
 
-  it('adds initial messages from both sides when a chat opens', () => {
+  it('does not add messages when a chat opens', () => {
     useSessionStore.getState().setActiveChat({ chatId: 'chat-1' })
 
-    expect(useSessionStore.getState().messages).toMatchObject([
-      { chatId: 'chat-1', text: 'прив', direction: 'incoming' },
-      { chatId: 'chat-1', text: 'прив', direction: 'outgoing' },
-    ])
+    expect(useSessionStore.getState().messages).toEqual([])
   })
 })

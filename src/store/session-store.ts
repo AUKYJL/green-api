@@ -28,14 +28,7 @@ export const useSessionStore = create<SessionStore>((set) => ({
   processedIncomingIds: new Set(),
   setSession: (credentials, settings) => set({ credentials, settings }),
   clearSession: () => set({ credentials: null, settings: null, activeChat: null, messages: [], processedIncomingIds: new Set() }),
-  setActiveChat: (activeChat) => set((state) => {
-    const timestamp = Date.now()
-    const initialMessages: Message[] = [
-      { id: `${activeChat.chatId}-initial-incoming-${timestamp}`, chatId: activeChat.chatId, text: 'прив', direction: 'incoming', timestamp },
-      { id: `${activeChat.chatId}-initial-outgoing-${timestamp}`, chatId: activeChat.chatId, text: 'прив', direction: 'outgoing', timestamp: timestamp + 1 },
-    ]
-    return { activeChat, messages: [...state.messages, ...initialMessages] }
-  }),
+  setActiveChat: (activeChat) => set({ activeChat }),
   addMessage: (message) => set((state) => ({ messages: [...state.messages, message] })),
   addIncoming: (message) => set((state) => {
     if (state.processedIncomingIds.has(message.id)) return state
